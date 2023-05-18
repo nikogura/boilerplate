@@ -209,12 +209,13 @@ func installedDbtRepo() (repoUrl string) {
 	homedir, err := dbt.GetHomeDir()
 	if err != nil {
 		err = errors.Wrapf(err, "failed to discover user homedir")
+		fmt.Printf("Error: %s\n", err)
 	}
 
 	config, err := dbt.LoadDbtConfig(homedir, false)
 	if err != nil {
 		err = errors.Wrapf(err, "failed loading dbt config")
-		//fmt.Printf("error: %s\n", err)
+		fmt.Printf("Error: %s\n", err)
 	}
 
 	repoUrl = config.Tools.Repo

@@ -4,6 +4,8 @@
 
 [![Circle CI](https://circleci.com/gh/nikogura/boilerplate.svg?style=shield)](https://circleci.com/gh/nikogura/boilerplate)
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/nikogura/boilerplate)](https://goreportcard.com/report/github.com/nikogura/boilerplate)
+
 [![Go Doc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](http://godoc.org/github.com/nikogura/boilerplate/pkg/boilerplate)
 
 [![Coverage Status](https://codecov.io/gh/nikogura/boilerplate/branch/master/graph/badge.svg)](https://codecov.io/gh/nikogura/boilerplate)
