@@ -16,6 +16,19 @@ project to generate.  Each folder name starts with an underscore (_) to prevent 
 
 Within a given project, all items are templatized; folders and files.
 
+## Installation
+
+You can install by cloning the repo and running `go build`, or by running `go install github.com/nikogura/boilerplate@latest`. 
+
+## Usage
+
+Once installed, run `boilerplate` without arguments to access the help message.
+
+The main usage is accomplished by running `boilerplate gen`, and answering the questions.
+
+
+
+
 ## Project Types
 ### [Cobra](pkg/boilerplate/project_templates/_cobraProject)
 This project is used to generate tools using the [cobra](https://github.com/spf13/cobra) command line framework.
