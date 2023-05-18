@@ -26,8 +26,50 @@ Once installed, run `boilerplate` without arguments to access the help message.
 
 The main usage is accomplished by running `boilerplate gen`, and answering the questions.
 
+    $ boilerplate gen
+    Creating new project of type "cobra"
+    Enter a name for your new tool.:
+      value: example
+    Enter a golang semver. [default: 1.20]:
+      value: 
+    Enter the go package name for your new tool.:
+      value: github.com/nikogura/example
+    Enter a short project description. [default: boilerplate autogen project]:
+      value: blah blah blah
+    Enter a long project description. [default: boilerplate autogen project]:
+      value: longer blah blah
+    Enter your DBT Repository URL.:
+      value: http://some-repo.s3.us-east-2.amazonaws.com
+    Enter a semantic version. [default: 0.1.0]:
+      value: 
+    Enter the project maintainer name.:
+      value: Nik Ogura
+    Enter the project maintainer email address.:
+      value: myemail@foo.com
+    New project created in ./example
 
+This creates the following in $pwd):
 
+    $ ls -R
+    .:
+    cmd	go.sum	 main.go	pkg		    README.md
+    go.mod	LICENSE  metadata.json	pre-commit-hook.sh  templates
+
+    ./cmd:
+    root.go
+
+    ./pkg:
+    example
+
+    ./pkg/example:
+    example.go
+
+    ./templates:
+    description.tmpl
+
+You can test it by running: `cd example && go build`.
+
+You can test it via gomason by running: `cd example && gomason build -vsl`.  Of course, if you're running on Linux like I do, you'll need to have a macOS cross compilation env available.  How to do that is beyond this README.  Check out the wonderful [osxcross](https://github.com/tpoechtrager/osxcross) for help with that.
 
 ## Project Types
 ### [Cobra](pkg/boilerplate/project_templates/_cobraProject)
