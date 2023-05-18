@@ -208,14 +208,12 @@ func commonPromptMessaging() map[ParamPrompt]Prompt {
 func installedDbtRepo() (repoUrl string) {
 	homedir, err := dbt.GetHomeDir()
 	if err != nil {
-		err = errors.Wrapf(err, "failed to discover user homedir")
-		fmt.Printf("Error: %s\n", err)
+		fmt.Printf("Failed discovering user home dir: %s\n", err)
 	}
 
 	config, err := dbt.LoadDbtConfig(homedir, false)
 	if err != nil {
-		err = errors.Wrapf(err, "failed loading dbt config")
-		fmt.Printf("Error: %s\n", err)
+		fmt.Printf("Failed loading dbt config: %s\n", err)
 	}
 
 	repoUrl = config.Tools.Repo
