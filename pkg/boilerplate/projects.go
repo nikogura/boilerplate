@@ -29,7 +29,7 @@ func GetProjectFs(projType string) (embed.FS, string, error) {
 		return cobraProject, "project_templates/_cobraProject", nil
 	}
 
-	return embed.FS{}, "", fmt.Errorf("failed to detect embeded package: %s", projType)
+	return embed.FS{}, "", fmt.Errorf("failed to detect embedded package: %s", projType)
 }
 
 // ValidProjectTypes  Lists the valid project types.

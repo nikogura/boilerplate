@@ -38,7 +38,7 @@ func TestGetProjectFs(t *testing.T) {
 			fs, _, err := GetProjectFs(tc.Input)
 			if err != nil {
 				if !tc.WantErr {
-					t.Errorf("unexpected err occured: %v", err)
+					t.Errorf("unexpected err occurred: %v", err)
 				}
 				return
 			}
