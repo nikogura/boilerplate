@@ -1,5 +1,5 @@
 /*
-	Copyright <2023> Nik Ogura <nik.ogura@gmail.com>
+	Copyright <2022> Nik Ogura <nik.ogura@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -217,7 +217,7 @@ func TestCobraServiceParamsFromPrompts_Defaults(t *testing.T) {
 			Name: "All Defaults",
 			Inputs: `test-proj-name
 
-test_proj_pkg
+github.com/test/test-proj-name
 
 
 https://dbt
@@ -227,7 +227,7 @@ tester@foo.com
 `,
 			Want: map[string]interface{}{
 				ProjName.String():            "test-proj-name",
-				ProjPkgName.String():         "test_proj_pkg",
+				ProjPkgName.String():         "github.com/test/test-proj-name",
 				ProjShortDesc.String():       "boilerplate autogen project",
 				ProjLongDesc.String():        "boilerplate autogen project",
 				ProjMaintainerName.String():  "tester",
@@ -263,4 +263,43 @@ func TestGoMajorAndMinor(t *testing.T) {
 	version := goMajorAndMinor()
 
 	assert.True(t, version != "", "Go version not generating")
+}
+
+func TestModuleValidations(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		isValid bool
+	}{
+		{"Valid GitHub module", "github.com/user/project", true},
+		{"Valid GitLab module", "gitlab.com/user/project", true},
+		{"Valid custom domain", "example.com/project/subproject", true},
+		{"Valid localhost", "localhost/project", true},
+		{"Invalid no slash", "github.com", false},
+		{"Invalid just domain", "example.com", false},
+		{"Invalid no host", "project", false},
+		{"Invalid space", "github.com/user/pro ject", false},
+		{"Valid deep path", "github.com/user/project/submodule", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// All validations must pass for the input to be considered valid
+			allValid := true
+			for _, validation := range moduleValidations {
+				if !validation.IsValid(tt.input) {
+					allValid = false
+					break
+				}
+			}
+			
+			if allValid != tt.isValid {
+				if tt.isValid {
+					t.Errorf("Expected %s to be valid but validation failed", tt.input)
+				} else {
+					t.Errorf("Expected %s to be invalid but validation passed", tt.input)
+				}
+			}
+		})
+	}
 }

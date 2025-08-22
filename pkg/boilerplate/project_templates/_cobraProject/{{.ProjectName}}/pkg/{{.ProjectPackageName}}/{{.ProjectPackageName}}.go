@@ -1,4 +1,4 @@
-package {{.ProjectName}}
+package {{.ProjectPackageName}}
 
 import (
     "fmt"

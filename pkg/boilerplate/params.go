@@ -1,5 +1,5 @@
 /*
-	Copyright <2023> Nik Ogura <nik.ogura@gmail.com>
+	Copyright <2022> Nik Ogura <nik.ogura@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -69,18 +69,28 @@ var nameValidations = []PromptValidation{
 	},
 }
 
-var pkgValidations = []PromptValidation{
+var moduleValidations = []PromptValidation{
 	{
 		IsValid: func(val string) bool {
 			return !strings.ContainsRune(val, ' ')
 		},
-		InvalidMsg: "Error: Go package cannot contain a space",
+		InvalidMsg: "Error: Module name cannot contain a space",
 	},
 	{
 		IsValid: func(val string) bool {
-			return !strings.ContainsRune(val, '-')
+			// Basic validation for module path format (host/path)
+			parts := strings.Split(val, "/")
+			if len(parts) < 2 {
+				return false
+			}
+			// Check if first part looks like a hostname
+			hostname := parts[0]
+			if strings.Contains(hostname, ".") || hostname == "localhost" {
+				return true
+			}
+			return false
 		},
-		InvalidMsg: "Error: Go package cannot contain a hyphen",
+		InvalidMsg: "Error: Module name must be in format 'host.com/path' (e.g., github.com/user/project)",
 	},
 }
 
@@ -160,9 +170,9 @@ func commonPromptMessaging() map[ParamPrompt]Prompt {
 			Validations:  nameValidations,
 		},
 		ProjPkgName: {
-			PromptMsg:    "Enter the go package name for your new tool.",
-			InputFailMsg: "failed to read package name",
-			Validations:  pkgValidations,
+			PromptMsg:    "Enter the go module name for your new tool.",
+			InputFailMsg: "failed to read module name",
+			Validations:  moduleValidations,
 		},
 		ProjShortDesc: {
 			PromptMsg:    "Enter a short project description.",
@@ -177,13 +187,13 @@ func commonPromptMessaging() map[ParamPrompt]Prompt {
 		ProjMaintainerName: {
 			PromptMsg:    "Enter the project maintainer name.",
 			InputFailMsg: "failed to read project maintainer name",
-			DefaultValue: "",
+			DefaultValue: "you@example.com",
 		},
 		ProjMaintainerEmail: {
 			PromptMsg:    "Enter the project maintainer email address.",
 			InputFailMsg: "failed to read project maintainer email address",
 			Validations:  emailValidation,
-			DefaultValue: "",
+			DefaultValue: "code@example.com",
 		},
 		GoVersion: {
 			PromptMsg:    "Enter a golang semver.",
@@ -206,9 +216,16 @@ func commonPromptMessaging() map[ParamPrompt]Prompt {
 }
 
 func installedDbtRepo() (repoUrl string) {
-	homedir, _ := dbt.GetHomeDir()
+	homedir, err := dbt.GetHomeDir()
+	if err != nil {
+		err = errors.Wrapf(err, "failed to discover user homedir")
+	}
 
-	config, _ := dbt.LoadDbtConfig(homedir, false)
+	config, err := dbt.LoadDbtConfig(homedir, false)
+	if err != nil {
+		err = errors.Wrapf(err, "failed loading dbt config")
+		//fmt.Printf("error: %s\n", err)
+	}
 
 	repoUrl = config.Tools.Repo
 	return repoUrl
@@ -233,8 +250,6 @@ func paramsFromPrompts(r io.Reader, prompts map[ParamPrompt]Prompt, pvals Prompt
 		ProjMaintainerName,
 		ProjMaintainerEmail,
 		ServerDefPort,
-		ServerShortDesc,
-		ServerLongDesc,
 		OwnerName,
 		OwnerEmail,
 	} {
@@ -244,6 +259,13 @@ func paramsFromPrompts(r io.Reader, prompts map[ParamPrompt]Prompt, pvals Prompt
 
 		v := prompts[p]
 		v.From = r
+
+		// Set dynamic default for package name based on project name
+		if p == ProjPkgName {
+			if projectName, exists := values[ProjName]; exists && projectName != nil && *projectName != "" {
+				v.DefaultValue = fmt.Sprintf("github.com/something/%s", *projectName)
+			}
+		}
 
 		dataVar, ok := values[p]
 		if !ok {

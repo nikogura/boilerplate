@@ -2,7 +2,7 @@
 
 [![Current Release](https://img.shields.io/github/release/nikogura/boilerplate.svg)](https://img.shields.io/github/release/nikogura/boilerplate.svg)
 
-[![Circle CI](https://circleci.com/gh/nikogura/boilerplate.svg?style=shield)](https://circleci.com/gh/nikogura/boilerplate)
+[![CI](https://github.com/nikogura/dbt/actions/workflows/ci.yml/badge.svg)](https://github.com/nikogura/dbt/actions/workflows/ci.yml)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/nikogura/boilerplate)](https://goreportcard.com/report/github.com/nikogura/boilerplate)
 
