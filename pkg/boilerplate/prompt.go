@@ -46,15 +46,15 @@ func PromptForInput(p Prompt) (data string, err error) {
 	}
 	msg = fmt.Sprintf("%s\n  value: ", msg)
 
-	fmt.Printf(msg)
+	fmt.Print(msg)
 
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		msg := "failed to read input name"
+		errMsg := "failed to read input name"
 		if p.InputFailMsg != "" {
-			msg = p.InputFailMsg
+			errMsg = p.InputFailMsg
 		}
-		err = errors.Wrapf(err, msg)
+		err = errors.Wrapf(err, errMsg)
 		return data, err
 	}
 

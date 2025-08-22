@@ -242,7 +242,10 @@ tester@foo.com
 		t.Run(tc.Name, func(t *testing.T) {
 			stdin := bufio.NewReader(strings.NewReader(tc.Inputs))
 			data := &CobraCliToolParams{}
-			CobraCliToolParamsFromPrompts(data, stdin)
+			err := CobraCliToolParamsFromPrompts(data, stdin)
+			if err != nil {
+				t.Errorf("error reading prompts: %s", err)
+			}
 
 			dataMap, err := data.AsMap()
 			if err != nil {
@@ -262,7 +265,7 @@ tester@foo.com
 func TestGoMajorAndMinor(t *testing.T) {
 	version := goMajorAndMinor()
 
-	assert.True(t, version != "", "Go version not generating")
+	assert.NotEmpty(t, version, "Go version not generating")
 }
 
 func TestModuleValidations(t *testing.T) {
@@ -292,7 +295,7 @@ func TestModuleValidations(t *testing.T) {
 					break
 				}
 			}
-			
+
 			if allValid != tt.isValid {
 				if tt.isValid {
 					t.Errorf("Expected %s to be valid but validation failed", tt.input)

@@ -21,8 +21,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
+// RootCmd represents the base command when called without any subcommands.
+var RootCmd = &cobra.Command{ //nolint:gochecknoglobals // cobra root command
 	Use:   "boilerplate",
 	Short: "Code Generation Tool",
 	Long: `
@@ -34,13 +34,14 @@ The "boilerplate" tool is intended to create a minimally usable codebase so you 
 `,
 }
 
-// Execute - execute the command
+// Execute - execute the command.
 func Execute() {
-	if err := RootCmd.Execute(); err != nil {
+	err := RootCmd.Execute()
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-func init() {
+func init() { //nolint:gochecknoinits // cobra command registration
 }

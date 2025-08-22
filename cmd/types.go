@@ -20,8 +20,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// typesCmd represents the create command
-var typesCmd = &cobra.Command{
+// typesCmd represents the create command.
+var typesCmd = &cobra.Command{ //nolint:gochecknoglobals // cobra command definition
 	Use:   "types",
 	Short: "Lists available boilerplate types.",
 	Long: `
@@ -35,6 +35,6 @@ Lists available boilerplate types.
 	},
 }
 
-func init() {
+func init() { //nolint:gochecknoinits // cobra command registration
 	RootCmd.AddCommand(typesCmd)
 }

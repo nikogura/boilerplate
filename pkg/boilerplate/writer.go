@@ -33,13 +33,13 @@ type TmplWriter struct {
 	TemplFs   embed.FS
 	FilePaths []FilePath
 	ProjDir   string
-	TmplVals  map[string]interface{}
+	TmplVals  map[string]any
 }
 
-func NewTmplWriter(outFs afero.Fs, projType string, vals map[string]interface{}) (TmplWriter, error) {
+func NewTmplWriter(outFs afero.Fs, projType string, vals map[string]any) (TmplWriter, error) {
 	fs, dirName, err := GetProjectFs(projType)
 	if err != nil {
-		return TmplWriter{}, fmt.Errorf("fs error: %v", err)
+		return TmplWriter{}, fmt.Errorf("fs error: %w", err)
 	}
 
 	w := TmplWriter{
@@ -48,25 +48,29 @@ func NewTmplWriter(outFs afero.Fs, projType string, vals map[string]interface{})
 		ProjDir:  dirName,
 		TmplVals: vals}
 
-	if w.FilePaths, err = w.GetFilePaths(dirName); err != nil {
-		return w, fmt.Errorf("failed to walk filepath from root(%s): %v", ".", err)
+	w.FilePaths, err = w.GetFilePaths(dirName)
+	if err != nil {
+		return w, fmt.Errorf("failed to walk filepath from root(%s): %w", ".", err)
 	}
 	return w, nil
 }
 
 func (w TmplWriter) BuildProject(destDir string) error {
 	//fp := w.FilePaths
-	if err := w.ResolveAllPathTemplates(); err != nil {
+	err := w.ResolveAllPathTemplates()
+	if err != nil {
 		return err
 	}
 
 	w.fixGoModTemplPaths()
 
-	if err := w.CreateAllFilePathsAtRoot(destDir); err != nil {
+	err = w.CreateAllFilePathsAtRoot(destDir)
+	if err != nil {
 		return err
 	}
 
-	if err := w.WriteAllDestFileTemplateData(destDir); err != nil {
+	err = w.WriteAllDestFileTemplateData(destDir)
+	if err != nil {
 		return err
 	}
 
@@ -76,8 +80,9 @@ func (w TmplWriter) BuildProject(destDir string) error {
 func (w TmplWriter) ResolveAllPathTemplates() error {
 	for i := range w.FilePaths {
 		fp := w.FilePaths[i]
-		if buf, err := w.ResolveTemplateVars(fp.Path); err != nil {
-			return fmt.Errorf("path resolution failure: path=%s, err=%v", fp.Path, err)
+		buf, err := w.ResolveTemplateVars(fp.Path)
+		if err != nil {
+			return fmt.Errorf("path resolution failure: path=%s, err=%w", fp.Path, err)
 		} else {
 			path := strings.Replace(buf.String(), w.ProjDir, "", 1)
 			if path[0] == '/' {
@@ -86,8 +91,9 @@ func (w TmplWriter) ResolveAllPathTemplates() error {
 			w.FilePaths[i].TemplPath = path
 		}
 
-		if buf, err := w.ResolveTemplateVars(fp.Name); err != nil {
-			return fmt.Errorf("name resolution failure: path=%s, err=%v", fp.Name, err)
+		buf, err = w.ResolveTemplateVars(fp.Name)
+		if err != nil {
+			return fmt.Errorf("name resolution failure: path=%s, err=%w", fp.Name, err)
 		} else {
 			name := strings.Replace(buf.String(), w.ProjDir, "", 1)
 			if name[0] == '/' {
@@ -103,13 +109,13 @@ func (w TmplWriter) ResolveAllPathTemplates() error {
 func (w TmplWriter) ResolveTemplateVars(str string) (*bytes.Buffer, error) {
 	tmpl, err := template.New("tmplWriter").Parse(str)
 	if err != nil {
-		return nil, fmt.Errorf("path parsing error: %v", err)
+		return nil, fmt.Errorf("path parsing error: %w", err)
 	}
 
 	buf := bytes.NewBuffer(nil)
 	err = tmpl.Execute(buf, w.TmplVals)
 	if err != nil {
-		return nil, fmt.Errorf("failed to exec template from string(%s): %v", str, err)
+		return nil, fmt.Errorf("failed to exec template from string(%s): %w", str, err)
 	}
 
 	return buf, nil
@@ -117,17 +123,28 @@ func (w TmplWriter) ResolveTemplateVars(str string) (*bytes.Buffer, error) {
 
 func (w TmplWriter) CreateAllFilePathsAtRoot(root string) error {
 	for _, fp := range w.FilePaths {
-		if err := w.CreatePath(root, fp.TemplPath); err != nil {
-			return fmt.Errorf("failed to create file(%s): err(%s)", fp.TemplPath, err)
+		err := w.CreatePath(root, fp.TemplPath, fp.IsDir)
+		if err != nil {
+			return fmt.Errorf("failed to create file(%s): err(%w)", fp.TemplPath, err)
 		}
 	}
 	return nil
 }
 
-func (w TmplWriter) CreatePath(root, file string) error {
+func (w TmplWriter) CreatePath(root, file string, isDir bool) error {
 	path := fmt.Sprintf("%s/%s", root, file)
-	if err := w.OutFs.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return fmt.Errorf("directory creation failed: %v", err)
+	if isDir {
+		// Create the directory itself
+		err := w.OutFs.MkdirAll(path, 0755)
+		if err != nil {
+			return fmt.Errorf("directory creation failed: %w", err)
+		}
+	} else {
+		// Create parent directories for files
+		err := w.OutFs.MkdirAll(filepath.Dir(path), 0755)
+		if err != nil {
+			return fmt.Errorf("directory creation failed: %w", err)
+		}
 	}
 	return nil
 }
@@ -138,8 +155,9 @@ func (w TmplWriter) WriteAllDestFileTemplateData(destDir string) error {
 			continue
 		}
 
-		if err := w.WriteFileTemplateData(fp, destDir); err != nil {
-			return fmt.Errorf("writing file(%s) failed: %v", fp.TemplName, err)
+		err := w.WriteFileTemplateData(fp, destDir)
+		if err != nil {
+			return fmt.Errorf("writing file(%s) failed: %w", fp.TemplName, err)
 		}
 	}
 
@@ -148,27 +166,30 @@ func (w TmplWriter) WriteAllDestFileTemplateData(destDir string) error {
 
 func (w TmplWriter) WriteFileTemplateData(fp FilePath, destDir string) error {
 	path := fmt.Sprintf("%s/%s", destDir, fp.TemplPath)
-	file, err := w.OutFs.Open(path)
+	file, err := w.OutFs.Create(path)
 	if err != nil {
-		file, err = w.OutFs.Create(path)
-		if err != nil {
-			return fmt.Errorf("failed to open file(%s): %v", path, err)
-		}
+		return fmt.Errorf("failed to create file(%s): %w", path, err)
 	}
-	defer file.Close()
+	defer func() {
+		closeErr := file.Close()
+		if closeErr != nil { //nolint:staticcheck // close error handling not needed
+			// Log or handle close error if needed
+		}
+	}()
 
 	buf, err := w.ResolveFileTemplateData(fp)
 	if err != nil {
-		return fmt.Errorf("failed to exec template: %v", err)
+		return fmt.Errorf("failed to exec template: %w", err)
 	}
 
-	if buf, err = w.removeBuildExclusions(buf); err != nil {
-		return fmt.Errorf("failed to remove build exclusions from file(%s): %v", fp.TemplName, err)
+	buf, err = w.removeBuildExclusions(buf)
+	if err != nil {
+		return fmt.Errorf("failed to remove build exclusions from file(%s): %w", fp.TemplName, err)
 	}
 
 	n, err := file.Write(buf.Bytes())
 	if err != nil {
-		return fmt.Errorf("cannot write file(%s) bytes: %v", path, err)
+		return fmt.Errorf("cannot write file(%s) bytes: %w", path, err)
 	} else if n != buf.Len() {
 		return fmt.Errorf("wrong number of bytes written: exp(%d) act(%d)", buf.Len(), n)
 	}
@@ -180,16 +201,16 @@ func (w TmplWriter) ResolveFileTemplateData(fp FilePath) (*bytes.Buffer, error) 
 	// Read the original file data not the parsed template path
 	file, err := w.TemplFs.Open(fp.Path)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open file(%s): err(%v)", fp.Path, err)
+		return nil, fmt.Errorf("cannot open file(%s): err(%w)", fp.Path, err)
 	}
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read file data(%s): err(%s)", fp.Path, err)
+		return nil, fmt.Errorf("cannot read file data(%s): err(%w)", fp.Path, err)
 	}
 
 	buf, err := w.ResolveTemplateVars(string(data))
 	if err != nil {
-		return nil, fmt.Errorf("cannot execute template with file(%s): %v", fp.Path, err)
+		return nil, fmt.Errorf("cannot execute template with file(%s): %w", fp.Path, err)
 	}
 
 	return buf, nil
@@ -198,23 +219,32 @@ func (w TmplWriter) ResolveFileTemplateData(fp FilePath) (*bytes.Buffer, error) 
 func (w TmplWriter) GetFilePaths(root string) ([]FilePath, error) {
 	var fp []FilePath
 
-	if entries, err := w.TemplFs.ReadDir(root); err != nil {
-		return fp, fmt.Errorf("failed to read embedded files at dir(%s): %v", root, err)
-	} else {
-		for _, e := range entries {
-			cpath := fmt.Sprintf("%s/%s", root, e.Name())
-			if e.IsDir() {
-				children, err := w.GetFilePaths(cpath)
-				if err != nil {
-					return nil, fmt.Errorf("failed to collected children at root path(%s): %v", cpath, err)
-				}
-				fp = append(fp, children...)
-			} else {
-				fp = append(fp, FilePath{
-					Path: cpath,
-					Name: e.Name(),
-				})
+	entries, err := w.TemplFs.ReadDir(root)
+	if err != nil {
+		return fp, fmt.Errorf("failed to read embedded files at dir(%s): %w", root, err)
+	}
+
+	for _, e := range entries {
+		cpath := fmt.Sprintf("%s/%s", root, e.Name())
+		if e.IsDir() {
+			// Add directory entry
+			fp = append(fp, FilePath{
+				Path:  cpath,
+				Name:  e.Name(),
+				IsDir: true,
+			})
+
+			children, childErr := w.GetFilePaths(cpath)
+			if childErr != nil {
+				return nil, fmt.Errorf("failed to collected children at root path(%s): %w", cpath, childErr)
 			}
+			fp = append(fp, children...)
+		} else {
+			fp = append(fp, FilePath{
+				Path:  cpath,
+				Name:  e.Name(),
+				IsDir: false,
+			})
 		}
 	}
 
@@ -235,7 +265,7 @@ func (w TmplWriter) fixGoModTemplPaths() {
 func (w TmplWriter) removeBuildExclusions(buf *bytes.Buffer) (*bytes.Buffer, error) {
 	replBuf, err := w.ResolveTemplateVars("// +build exclude {{.ProjectName}}\n")
 	if err != nil {
-		return nil, fmt.Errorf("removing build exclusions cannot execute template: %v", err)
+		return nil, fmt.Errorf("removing build exclusions cannot execute template: %w", err)
 	}
 
 	return bytes.NewBufferString(strings.ReplaceAll(buf.String(), replBuf.String(), "")), nil

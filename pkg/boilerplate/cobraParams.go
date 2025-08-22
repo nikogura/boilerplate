@@ -17,40 +17,49 @@ import (
 )
 
 type CobraCliToolParams struct {
-	ProjectName      string
-	ProjectPackage   string
-	ProjectShortDesc string
-	ProjectLongDesc  string
-	MaintainerName   string
-	MaintainerEmail  string
-	GolangVersion    string
-	DbtRepo          string
-	ProjectVersion   string
+	ProjectName      string `json:"ProjectName"`
+	ProjectPackage   string `json:"ProjectPackage"`
+	ProjectShortDesc string `json:"ProjectShortDesc"`
+	ProjectLongDesc  string `json:"ProjectLongDesc"`
+	MaintainerName   string `json:"MaintainerName"`
+	MaintainerEmail  string `json:"MaintainerEmail"`
+	GolangVersion    string `json:"GolangVersion"`
+	DbtRepo          string `json:"DbtRepo"`
+	ProjectVersion   string `json:"ProjectVersion"`
 }
 
 func (cp *CobraCliToolParams) Values() map[ParamPrompt]*string {
 	return map[ParamPrompt]*string{
 		GoVersion:           &cp.GolangVersion,
+		DockerRegistry:      nil,
+		DockerProject:       nil,
 		ProjName:            &cp.ProjectName,
 		ProjPkgName:         &cp.ProjectPackage,
+		ProjEnvPrefix:       nil,
 		ProjShortDesc:       &cp.ProjectShortDesc,
 		ProjLongDesc:        &cp.ProjectLongDesc,
 		ProjMaintainerName:  &cp.MaintainerName,
 		ProjMaintainerEmail: &cp.MaintainerEmail,
+		ServerDefPort:       nil,
+		ServerShortDesc:     nil,
+		ServerLongDesc:      nil,
+		OwnerName:           nil,
+		OwnerEmail:          nil,
 		DbtRepo:             &cp.DbtRepo,
 		ProjectVersion:      &cp.ProjectVersion,
 	}
 }
 
-func (cp CobraCliToolParams) AsMap() (output map[string]interface{}, err error) {
+func (cp *CobraCliToolParams) AsMap() (output map[string]any, err error) {
 	data, err := json.Marshal(&cp)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to marshal params object")
 		return output, err
 	}
 
-	output = make(map[string]interface{})
-	if err = json.Unmarshal(data, &output); err != nil {
+	output = make(map[string]any)
+	err = json.Unmarshal(data, &output)
+	if err != nil {
 		err = errors.Wrapf(err, "failed to unmarshal data just marshalled")
 		return output, err
 	}

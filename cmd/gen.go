@@ -15,43 +15,92 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/nikogura/boilerplate/pkg/boilerplate"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
-var projectType string
-var destDir string
+var projectType string //nolint:gochecknoglobals // cobra command flag
+var destDir string     //nolint:gochecknoglobals // cobra command flag
 
-// genCmd represents the create command
-var genCmd = &cobra.Command{
+// promptForProjectType prompts the user to select a project type from available options.
+func promptForProjectType() string {
+	validTypes := boilerplate.ValidProjectTypes()
+
+	fmt.Println("Available project types:")
+	for i, pType := range validTypes {
+		fmt.Printf("  %d. %s\n", i+1, pType)
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Print("Please select a project type (number): ")
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("Error reading input: %v\n", err)
+			continue
+		}
+
+		input = strings.TrimSpace(input)
+		choice, err := strconv.Atoi(input)
+		if err != nil {
+			fmt.Println("Please enter a valid number.")
+			continue
+		}
+
+		if choice < 1 || choice > len(validTypes) {
+			fmt.Printf("Please enter a number between 1 and %d.\n", len(validTypes))
+			continue
+		}
+
+		return validTypes[choice-1]
+	}
+}
+
+// genCmd represents the create command.
+var genCmd = &cobra.Command{ //nolint:gochecknoglobals // cobra command definition
 	Use:   "gen",
 	Short: "Creates a new code project based on an embedded template.",
 	Long: `
 Creates a new code project based on an embedded template.
 
-When run, it will ask you for a tool name, package and description.  It will also ask you for the name and email address of the author.  This information is used to generate all the boilerplate files and such.
+When run, it will ask you for a project name, and description.  It will also ask you for the name and email address of the author.  This information is used to generate all the boilerplate files and such.
 
-Then it will generate a basic, working tool for you that will compile and publish, but won't do much more than that.  The rest is up to you.
+Creates a skeleton project based on one of several project types.  Current supported types are:
 
-`,
+cobra   -   A project based on the excellent Cobra CLI framework.
+headless-service    -   A project implementing a standalone headless service useful for implementing APIs and the like.
+spa     -   A project based on React, designed to be built as a self-contained single page application.
+
+Each project is set up so it can be built, and provides CI workflows for both DBT tools as well as Github actions.
+
+You can specify the project type on the command line, or be prompted.  If you omit the destination directory, it defaults to the CWD.
+
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		var err error
+
+		// Determine project type
 		if projectType == "" {
 			if len(args) > 0 {
 				projectType = args[0]
+			} else {
+				// Prompt user for project type selection
+				projectType = promptForProjectType()
 			}
 		}
 
 		if destDir == "" {
-			cwd, err := os.Getwd()
+			destDir, err = os.Getwd()
 			if err != nil {
-				log.Fatalf("failed getting current working directory")
+				log.Fatalf("failed to determine CWD: %v", err)
 			}
-
-			destDir = cwd
 		}
 
 		if !boilerplate.IsValidProjectType(projectType) {
@@ -60,14 +109,14 @@ Then it will generate a basic, working tool for you that will compile and publis
 
 		fmt.Printf("Creating new project of type %q\n", projectType)
 
-		data, err := boilerplate.PromptsForProject(projectType)
+		prompts, err := boilerplate.PromptsForProject(projectType)
 		if err != nil {
-			log.Fatalf("prompts processing error: %v", err)
+			log.Fatalf("failed to get prompts for project type %s: %v", projectType, err)
 		}
 
-		datamap, err := data.AsMap()
+		datamap, err := prompts.AsMap()
 		if err != nil {
-			log.Fatalf("failed converting project data to map")
+			log.Fatalf("failed to export params as map: %v", err)
 		}
 
 		wr, err := boilerplate.NewTmplWriter(afero.NewOsFs(), projectType, datamap)
@@ -75,17 +124,17 @@ Then it will generate a basic, working tool for you that will compile and publis
 			log.Fatalf("failed to create template writer: %v", err)
 		}
 
-		if err = wr.BuildProject(destDir); err != nil {
+		err = wr.BuildProject(destDir)
+		if err != nil {
 			log.Fatalf("failed to create templated project: %v", err)
 		}
 
 		fmt.Printf("New project created in ./%s\n", datamap["ProjectName"])
-
 	},
 }
 
-func init() {
+func init() { //nolint:gochecknoinits // cobra command registration
 	RootCmd.AddCommand(genCmd)
-	genCmd.Flags().StringVarP(&projectType, "type", "t", "cobra", "Project Type")
-	genCmd.Flags().StringVarP(&destDir, "dest-dir", "d", "", "Destination Directory (Defaults to CWD")
+	genCmd.Flags().StringVarP(&projectType, "type", "t", "", "Project Type (if not specified, you'll be prompted to select)")
+	genCmd.Flags().StringVarP(&destDir, "dest-dir", "d", "", "Destination Directory (Defaults to CWD)")
 }

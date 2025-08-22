@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    concurrency: ci_test
+    outputs:
+      semver: ${{"{{"}}steps.semver.outputs.version_tag{{"}}"}}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Semver
+        uses: paulhatch/semantic-version@v5.1.0
+        with:
+          bump_each_commit: true
+        id: semver
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{"{{"}} secrets.INFRA_BOT_SSH_KEY {{"}}"}}
+
+      - name: Configure Git for SSH
+        run: |
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: {{.GolangVersion}}
+
+      - name: Configure Go for Private Modules
+        run: |
+          go env -w GOPRIVATE="github.com/something/*"
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          verify: false
+
+      - name: Run Tests
+        run: |
+          go test -v ./...
+
+      - name: Tag Repo
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{"{{"}}secrets.TAGGING_PAT{{"}}"}}
+          custom_tag: ${{"{{"}}steps.semver.outputs.version_tag{{"}}"}}
+          tag_prefix: ""
+
+      - name: Publish Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{"{{"}} secrets.TAGGING_PAT {{"}}"}}
+        with:
+          tag_name: ${{"{{"}} steps.semver.outputs.version_tag {{"}}"}}
+          release_name: ${{"{{"}} steps.semver.outputs.version_tag {{"}}"}}
+          draft: false
+          prerelease: false
+
+  publish:
+    needs: test
+    uses: something/control-continuous-integration/.github/workflows/image-publish-dev.yaml@main
+    secrets: inherit
+    with:
+      SEMVER: ${{"{{"}}needs.test.outputs.semver{{"}}"}}
+      REPOSITORY: ${{"{{"}} github.event.repository.name {{"}}"}}

@@ -19,7 +19,7 @@ func MapOnly(hash map[string]interface{}, err error) map[string]interface{} {
 
 	return hash
 }
-func TestNewTmplWriter_BuildProject(t *testing.T) {
+func TestNewTmplWriter_BuildProject(t *testing.T) { //nolint:gocognit // test complexity acceptable
 	for _, tc := range []struct {
 		Name     string
 		ProjType string
@@ -30,7 +30,7 @@ func TestNewTmplWriter_BuildProject(t *testing.T) {
 		{
 			Name:     "Cobra Project",
 			ProjType: "cobra",
-			Params: MapOnly(CobraCliToolParams{
+			Params: MapOnly((&CobraCliToolParams{
 				ProjectName:      "test-proj-github-name",
 				ProjectPackage:   "test_proj_pkg",
 				ProjectShortDesc: "proj short",
@@ -40,7 +40,7 @@ func TestNewTmplWriter_BuildProject(t *testing.T) {
 				DbtRepo:          "https://dbt",
 				ProjectVersion:   "0.1.0",
 				GolangVersion:    "1.16",
-			}.AsMap()),
+			}).AsMap()),
 			ExpStat: []string{
 				"test-proj-github-name",
 				"test-proj-github-name/go.mod",
@@ -65,20 +65,21 @@ func TestNewTmplWriter_BuildProject(t *testing.T) {
 			// Sanity check to make sure the files aren't already there
 			for _, e := range tc.ExpStat {
 				expFile := fmt.Sprintf("%s/%s", testDir, e)
-				fi, err := afs.Stat(expFile)
-				if err == nil && !tc.ExpError {
+				fi, statErr := afs.Stat(expFile)
+				if statErr == nil && !tc.ExpError {
 					t.Fatalf("tc(%s) expected dir to not exist: %+v", tc.Name, fi)
 				}
 			}
 
-			if err = w.BuildProject(testDir); err != nil {
+			err = w.BuildProject(testDir)
+			if err != nil {
 				t.Fatalf("tc(%s) failed to write template project: %v", tc.Name, err)
 			}
 
 			for _, e := range tc.ExpStat {
 				expFile := fmt.Sprintf("%s/%s", testDir, e)
-				_, err := afs.Stat(expFile)
-				if err != nil && !tc.ExpError {
+				_, statErr := afs.Stat(expFile)
+				if statErr != nil && !tc.ExpError {
 					t.Fatalf("tc(%s) expected file doesn't exist: file(%s)", tc.Name, expFile)
 				}
 			}

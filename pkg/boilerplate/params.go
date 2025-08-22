@@ -51,10 +51,10 @@ func (p ParamPrompt) String() string {
 
 type PromptValues interface {
 	Values() map[ParamPrompt]*string
-	AsMap() (data map[string]interface{}, err error)
+	AsMap() (data map[string]any, err error)
 }
 
-var nameValidations = []PromptValidation{
+var nameValidations = []PromptValidation{ //nolint:gochecknoglobals // shared validation rules
 	{
 		IsValid: func(val string) bool {
 			return !strings.ContainsRune(val, ' ')
@@ -69,7 +69,7 @@ var nameValidations = []PromptValidation{
 	},
 }
 
-var moduleValidations = []PromptValidation{
+var moduleValidations = []PromptValidation{ //nolint:gochecknoglobals // shared validation rules
 	{
 		IsValid: func(val string) bool {
 			return !strings.ContainsRune(val, ' ')
@@ -94,7 +94,7 @@ var moduleValidations = []PromptValidation{
 	},
 }
 
-var envPrefix = []PromptValidation{
+var envPrefix = []PromptValidation{ //nolint:gochecknoglobals // shared validation rules
 	{
 		IsValid: func(val string) bool {
 			isAlphaCap := regexp.MustCompile(`^[A-Z]+$`).MatchString
@@ -104,7 +104,7 @@ var envPrefix = []PromptValidation{
 	},
 }
 
-var emailValidation = []PromptValidation{
+var emailValidation = []PromptValidation{ //nolint:gochecknoglobals // shared validation rules
 	{
 		IsValid: func(val string) bool {
 			_, err := mail.ParseAddress(val)
@@ -114,7 +114,7 @@ var emailValidation = []PromptValidation{
 	},
 }
 
-var portValidation = []PromptValidation{
+var portValidation = []PromptValidation{ //nolint:gochecknoglobals // shared validation rules
 	{
 		IsValid: func(val string) bool {
 			isNumeric := regexp.MustCompile(`^[0-9]+$`).MatchString
@@ -137,7 +137,7 @@ var portValidation = []PromptValidation{
 	},
 }
 
-var urlValidation = []PromptValidation{
+var urlValidation = []PromptValidation{ //nolint:gochecknoglobals // shared validation rules
 	{
 		IsValid: func(val string) bool {
 			u, err := url.ParseRequestURI(val)
@@ -147,7 +147,7 @@ var urlValidation = []PromptValidation{
 	},
 }
 
-var semVerValidation = []PromptValidation{
+var semVerValidation = []PromptValidation{ //nolint:gochecknoglobals // shared validation rules
 	{
 		IsValid: func(val string) bool {
 			ok := semver.IsValid(val)
@@ -164,6 +164,19 @@ var semVerValidation = []PromptValidation{
 
 func commonPromptMessaging() map[ParamPrompt]Prompt {
 	return map[ParamPrompt]Prompt{
+		GoVersion: {
+			PromptMsg:    "Enter a golang semver.",
+			InputFailMsg: "failed to read project description",
+			DefaultValue: goMajorAndMinor(),
+		},
+		DockerRegistry: {
+			PromptMsg:    "Enter Docker registry.",
+			InputFailMsg: "failed to read Docker registry",
+		},
+		DockerProject: {
+			PromptMsg:    "Enter Docker project.",
+			InputFailMsg: "failed to read Docker project",
+		},
 		ProjName: {
 			PromptMsg:    "Enter a name for your new tool.",
 			InputFailMsg: "failed to read project name",
@@ -173,6 +186,11 @@ func commonPromptMessaging() map[ParamPrompt]Prompt {
 			PromptMsg:    "Enter the go module name for your new tool.",
 			InputFailMsg: "failed to read module name",
 			Validations:  moduleValidations,
+		},
+		ProjEnvPrefix: {
+			PromptMsg:    "Enter environment variable prefix.",
+			InputFailMsg: "failed to read environment prefix",
+			Validations:  envPrefix,
 		},
 		ProjShortDesc: {
 			PromptMsg:    "Enter a short project description.",
@@ -195,10 +213,27 @@ func commonPromptMessaging() map[ParamPrompt]Prompt {
 			Validations:  emailValidation,
 			DefaultValue: "code@example.com",
 		},
-		GoVersion: {
-			PromptMsg:    "Enter a golang semver.",
-			InputFailMsg: "failed to read project description",
-			DefaultValue: goMajorAndMinor(),
+		ServerDefPort: {
+			PromptMsg:    "Enter default server port.",
+			InputFailMsg: "failed to read server port",
+			Validations:  portValidation,
+		},
+		ServerShortDesc: {
+			PromptMsg:    "Enter short server description.",
+			InputFailMsg: "failed to read server short description",
+		},
+		ServerLongDesc: {
+			PromptMsg:    "Enter long server description.",
+			InputFailMsg: "failed to read server long description",
+		},
+		OwnerName: {
+			PromptMsg:    "Enter owner name.",
+			InputFailMsg: "failed to read owner name",
+		},
+		OwnerEmail: {
+			PromptMsg:    "Enter owner email.",
+			InputFailMsg: "failed to read owner email",
+			Validations:  emailValidation,
 		},
 		DbtRepo: {
 			PromptMsg:    "Enter your DBT Repository URL.",
@@ -215,20 +250,19 @@ func commonPromptMessaging() map[ParamPrompt]Prompt {
 	}
 }
 
-func installedDbtRepo() (repoUrl string) {
+func installedDbtRepo() (repoURL string) {
 	homedir, err := dbt.GetHomeDir()
 	if err != nil {
-		err = errors.Wrapf(err, "failed to discover user homedir")
+		return ""
 	}
 
 	config, err := dbt.LoadDbtConfig(homedir, false)
 	if err != nil {
-		err = errors.Wrapf(err, "failed loading dbt config")
-		//fmt.Printf("error: %s\n", err)
+		return ""
 	}
 
-	repoUrl = config.Tools.Repo
-	return repoUrl
+	repoURL = config.Tools.Repo
+	return repoURL
 }
 
 func goMajorAndMinor() (goMajMin string) {
@@ -273,7 +307,12 @@ func paramsFromPrompts(r io.Reader, prompts map[ParamPrompt]Prompt, pvals Prompt
 			return err
 		}
 
-		if dataVar != nil && *dataVar != "" {
+		// Skip nil values (parameters not supported by this struct type)
+		if dataVar == nil {
+			continue
+		}
+
+		if *dataVar != "" {
 			continue
 		}
 

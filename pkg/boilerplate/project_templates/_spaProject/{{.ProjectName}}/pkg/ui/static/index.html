@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.ProjectName}} - Single-Page Application Service</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --secondary-gradient: linear-gradient(45deg, #00d4ff 0%, #0099cc 100%);
+            --text-light: rgba(255, 255, 255, 0.9);
+            --text-muted: rgba(255, 255, 255, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(0, 212, 255, 0.2);
+            --dark-bg: rgba(0, 0, 0, 0.2);
+            --primary-blue: #00d4ff;
+            --primary-dark: #1a1a2e;
+            --primary-navy: #16213e;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--primary-gradient);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--dark-bg);
+            backdrop-filter: blur(15px);
+            padding: 1rem 2rem;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-blue);
+            text-decoration: none;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary-blue);
+            background: var(--glass-bg);
+            box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+        }
+        
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .hero .subtitle {
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+        
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: var(--primary-blue);
+            color: var(--primary-dark);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: white;
+            border: 2px solid var(--primary-blue);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn-primary:hover {
+            background: #00b8e6;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--primary-blue);
+            color: var(--primary-dark);
+        }
+        
+        .features {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        
+        .feature-card {
+            background: var(--glass-bg);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .feature-card h3 {
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+        
+        .feature-card p {
+            opacity: 0.9;
+            line-height: 1.7;
+        }
+        
+        .status-section {
+            background: var(--dark-bg);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-top: 1px solid var(--glass-border);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--glass-bg);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .api-links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        
+        .api-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--primary-blue);
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .api-link:hover {
+            background: var(--primary-blue);
+            color: var(--primary-dark);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-info {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: var(--glass-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            max-width: 200px;
+            z-index: 999;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.2);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .hero {
+                padding: 6rem 1rem 2rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .api-links {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .user-info {
+                position: static;
+                margin: 1rem auto;
+                max-width: none;
+            }
+        }
+        
+        .scroll-hint {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+            opacity: 0.7;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            40% {
+                transform: translateX(-50%) translateY(-10px);
+            }
+            60% {
+                transform: translateX(-50%) translateY(-5px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">🚀 {{.ProjectName}}</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#status">Status</a></li>
+                <li><a href="/api/status" target="_blank">API</a></li>
+                <li><a href="http://localhost:8080/metrics" target="_blank">Metrics</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="user-info" id="userInfo">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="status-dot"></div>
+            <span>Loading user...</span>
+        </div>
+    </div>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1>{{.ProjectName}} Service</h1>
+                <p class="subtitle">
+                    A minimal Single-Page Application server built in Go, demonstrating production-ready patterns for modern web services.
+                </p>
+                
+                <div class="cta-buttons">
+                    <a href="#features" class="btn btn-primary">
+                        <span>🔍</span> Explore Features
+                    </a>
+                    <a href="{{.ProjectPackage}}" class="btn btn-secondary" target="_blank">
+                        <span>📖</span> View Documentation
+                    </a>
+                </div>
+                
+                <div class="scroll-hint">
+                    <div style="font-size: 1.5rem;">⬇️</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <h2>🌟 Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">⚙️</span>
+                    <h3>Configuration Management</h3>
+                    <p>Viper-based configuration with automatic environment variable binding and validation.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <h3>Metrics & Monitoring</h3>
+                    <p>Prometheus metrics with request tracking, health checks, and observability out of the box.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🔐</span>
+                    <h3>OIDC Authentication</h3>
+                    <p>Optional OpenID Connect integration with Google, Auth0, and other providers.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">📝</span>
+                    <h3>Structured Logging</h3>
+                    <p>JSON structured logging with zap for production-ready observability.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">💾</span>
+                    <h3>Embedded Assets</h3>
+                    <p>Static files served from embedded filesystem with client-side routing support.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <span class="feature-icon">🧪</span>
+                    <h3>Testing & Quality</h3>
+                    <p>Comprehensive test coverage with mocks and lint-clean code following Go best practices.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="status-section" id="status">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Service is running and healthy</span>
+            </div>
+            
+            <h3>API Endpoints</h3>
+            <div class="api-links">
+                <a href="/api/status" class="api-link" target="_blank">GET /api/status</a>
+                <a href="/api/user" class="api-link" target="_blank">GET /api/user</a>
+                <a href="http://localhost:8080/metrics" class="api-link" target="_blank">GET /metrics</a>
+                <a href="http://localhost:8080/healthz" class="api-link" target="_blank">GET /healthz</a>
+                <a href="http://localhost:8080/readyz" class="api-link" target="_blank">GET /readyz</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 {{.ProjectName}} Service | Built with Go & ❤️</p>
+    </footer>
+
+    <script>
+        // Fetch user information
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/user');
+                if (response.ok) {
+                    const data = await response.json();
+                    const userDiv = document.getElementById('userInfo');
+                    userDiv.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="status-dot"></div>
+                            <div>
+                                <strong>${data.user}</strong>
+                                ${data.name ? `<br><small>${data.name}</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('userInfo').innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="status-dot"></div>
+                            <span>Anonymous User</span>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('userInfo').innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="width: 12px; height: 12px; background: #ff4444; border-radius: 50%;"></div>
+                        <span>Connection Error</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Load user info when page loads
+        document.addEventListener('DOMContentLoaded', loadUserInfo);
+
+        // Add some interactivity to feature cards
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.addEventListener('click', function() {
+                this.style.transform = 'translateY(-10px) scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-10px) scale(1)';
+                }, 100);
+            });
+        });
+
+        // Simple client-side routing simulation
+        window.addEventListener('popstate', function(event) {
+            console.log('Navigation event:', event.state);
+        });
+
+        // Auto-hide scroll hint when user scrolls
+        let scrollHintHidden = false;
+        window.addEventListener('scroll', function() {
+            if (!scrollHintHidden && window.scrollY > 100) {
+                const hint = document.querySelector('.scroll-hint');
+                if (hint) {
+                    hint.style.opacity = '0';
+                    scrollHintHidden = true;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

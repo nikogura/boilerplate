@@ -45,7 +45,7 @@ func TestGetProjectFs(t *testing.T) {
 			if reflect.DeepEqual(fs, embed.FS{}) {
 				t.Errorf("fs nil unexpected")
 			} else if !reflect.DeepEqual(fs, tc.Want) {
-
+				t.Errorf("fs does not match expected value")
 			}
 		})
 	}

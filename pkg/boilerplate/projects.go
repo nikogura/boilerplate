@@ -17,16 +17,31 @@ import (
 	"os"
 )
 
-const VERSION = "3.6.0"
+const (
+	VERSION             = "3.6.0"
+	CobraProjectType    = "cobra"
+	HeadlessServiceType = "headless-service"
+	SPAProjectType      = "spa"
+)
 
 //go:embed project_templates/_cobraProject/*
 var cobraProject embed.FS
 
+//go:embed project_templates/_headlessServiceProject/*
+var headlessServiceProject embed.FS
+
+//go:embed project_templates/_spaProject/*
+var spaProject embed.FS
+
 // GetProjectFs  Gets the embedded file system for the project of this type.
 func GetProjectFs(projType string) (embed.FS, string, error) {
 	switch projType {
-	case "cobra":
+	case CobraProjectType:
 		return cobraProject, "project_templates/_cobraProject", nil
+	case HeadlessServiceType:
+		return headlessServiceProject, "project_templates/_headlessServiceProject", nil
+	case SPAProjectType:
+		return spaProject, "project_templates/_spaProject", nil
 	}
 
 	return embed.FS{}, "", fmt.Errorf("failed to detect embedded package: %s", projType)
@@ -35,14 +50,20 @@ func GetProjectFs(projType string) (embed.FS, string, error) {
 // ValidProjectTypes  Lists the valid project types.
 func ValidProjectTypes() []string {
 	return []string{
-		"cobra",
+		CobraProjectType,
+		HeadlessServiceType,
+		SPAProjectType,
 	}
 }
 
 // IsValidProjectType  Returns true or false depending on whether the project is a supported type.
 func IsValidProjectType(v string) bool {
 	switch v {
-	case "cobra":
+	case CobraProjectType:
+		return true
+	case HeadlessServiceType:
+		return true
+	case SPAProjectType:
 		return true
 	}
 	return false
@@ -50,13 +71,41 @@ func IsValidProjectType(v string) bool {
 
 func PromptsForProject(proj string) (data PromptValues, err error) {
 	switch proj {
-	case "cobra":
+	case CobraProjectType:
 		data := &CobraCliToolParams{}
 
 		for {
 			err = CobraCliToolParamsFromPrompts(data, os.Stdin)
 			if err != nil {
-				fmt.Printf(color.RedString("%s\n", err))
+				fmt.Print(color.RedString("%s\n", err))
+			} else {
+				break
+			}
+		}
+
+		return data, err
+
+	case HeadlessServiceType:
+		data := &HeadlessServiceParams{}
+
+		for {
+			err = HeadlessServiceParamsFromPrompts(data, os.Stdin)
+			if err != nil {
+				fmt.Print(color.RedString("%s\n", err))
+			} else {
+				break
+			}
+		}
+
+		return data, err
+
+	case SPAProjectType:
+		data := NewSPAParams()
+
+		for {
+			err = SPAParamsFromPrompts(data, os.Stdin)
+			if err != nil {
+				fmt.Print(color.RedString("%s\n", err))
 			} else {
 				break
 			}
