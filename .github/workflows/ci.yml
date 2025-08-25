@@ -54,7 +54,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{secrets.TAGGING_PAT}}
-          custom_tag: ${{needs.test.outputs.version_tag}}
+          custom_tag: ${{needs.test.outputs.semver}}
           tag_prefix: ""
 
       - name: Publish Release
@@ -62,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TAGGING_PAT }}
         with:
-          tag_name: ${{ needs.test.outputs.version_tag }}
-          release_name: ${{ needs.test.outputs.version_tag }}
+          tag_name: ${{needs.test.outputs.semver}}
+          release_name: ${{needs.test.outputs.semver}}
           draft: false
           prerelease: false
