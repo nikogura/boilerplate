@@ -12,6 +12,12 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+
+    - name: Semver
+      uses: paulhatch/semantic-version@v5.1.0
+      with:
+        bump_each_commit: true
+      id: semver
     
     - name: Set up Go
       uses: actions/setup-go@v5
@@ -47,3 +53,20 @@ jobs:
         file: ./coverage.txt
         token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true
+
+    - name: Tag Repo
+      uses: mathieudutour/github-tag-action@v6.1
+      with:
+        github_token: ${{secrets.TAGGING_PAT}}
+        custom_tag: ${{steps.semver.outputs.version_tag}}
+        tag_prefix: ""
+
+    - name: Publish Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.TAGGING_PAT }}
+      with:
+        tag_name: ${{ steps.semver.outputs.version_tag }}
+        release_name: ${{ steps.semver.outputs.version_tag }}
+        draft: false
+        prerelease: false
