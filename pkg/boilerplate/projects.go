@@ -13,15 +13,17 @@ import (
 	"embed"
 	"fmt"
 	"github.com/fatih/color"
+	"io"
 	"log"
 	"os"
 )
 
 const (
-	VERSION             = "3.6.0"
-	CobraProjectType    = "cobra"
-	HeadlessServiceType = "headless-service"
-	SPAProjectType      = "spa"
+	VERSION               = "3.6.0"
+	CobraProjectType      = "cobra"
+	HeadlessServiceType   = "headless-service"
+	SPAProjectType        = "spa"
+	IndirectSelectionType = "indirect-selection"
 )
 
 //go:embed project_templates/_cobraProject/*
@@ -33,6 +35,9 @@ var headlessServiceProject embed.FS
 //go:embed project_templates/_spaProject/*
 var spaProject embed.FS
 
+//go:embed all:project_templates/_indirectSelectionProject
+var indirectSelectionProject embed.FS
+
 // GetProjectFs  Gets the embedded file system for the project of this type.
 func GetProjectFs(projType string) (embed.FS, string, error) {
 	switch projType {
@@ -42,6 +47,8 @@ func GetProjectFs(projType string) (embed.FS, string, error) {
 		return headlessServiceProject, "project_templates/_headlessServiceProject", nil
 	case SPAProjectType:
 		return spaProject, "project_templates/_spaProject", nil
+	case IndirectSelectionType:
+		return indirectSelectionProject, "project_templates/_indirectSelectionProject", nil
 	}
 
 	return embed.FS{}, "", fmt.Errorf("failed to detect embedded package: %s", projType)
@@ -53,6 +60,7 @@ func ValidProjectTypes() []string {
 		CobraProjectType,
 		HeadlessServiceType,
 		SPAProjectType,
+		IndirectSelectionType,
 	}
 }
 
@@ -65,53 +73,37 @@ func IsValidProjectType(v string) bool {
 		return true
 	case SPAProjectType:
 		return true
+	case IndirectSelectionType:
+		return true
 	}
 	return false
+}
+
+// promptForParamsWithRetry handles the retry loop for parameter collection.
+func promptForParamsWithRetry[T PromptValues](data T, promptFunc func(T, io.Reader) error) T {
+	for {
+		err := promptFunc(data, os.Stdin)
+		if err != nil {
+			fmt.Print(color.RedString("%s\n", err))
+		} else {
+			return data
+		}
+	}
 }
 
 func PromptsForProject(proj string) (data PromptValues, err error) {
 	switch proj {
 	case CobraProjectType:
-		data := &CobraCliToolParams{}
-
-		for {
-			err = CobraCliToolParamsFromPrompts(data, os.Stdin)
-			if err != nil {
-				fmt.Print(color.RedString("%s\n", err))
-			} else {
-				break
-			}
-		}
-
-		return data, err
+		return promptForParamsWithRetry(&CobraCliToolParams{}, CobraCliToolParamsFromPrompts), nil
 
 	case HeadlessServiceType:
-		data := &HeadlessServiceParams{}
-
-		for {
-			err = HeadlessServiceParamsFromPrompts(data, os.Stdin)
-			if err != nil {
-				fmt.Print(color.RedString("%s\n", err))
-			} else {
-				break
-			}
-		}
-
-		return data, err
+		return promptForParamsWithRetry(&HeadlessServiceParams{}, HeadlessServiceParamsFromPrompts), nil
 
 	case SPAProjectType:
-		data := NewSPAParams()
+		return promptForParamsWithRetry(NewSPAParams(), SPAParamsFromPrompts), nil
 
-		for {
-			err = SPAParamsFromPrompts(data, os.Stdin)
-			if err != nil {
-				fmt.Print(color.RedString("%s\n", err))
-			} else {
-				break
-			}
-		}
-
-		return data, err
+	case IndirectSelectionType:
+		return promptForParamsWithRetry(&IndirectSelectionParams{}, IndirectSelectionParamsFromPrompts), nil
 
 	default:
 		log.Fatalf("unknown or unhandled project type. options are %s", ValidProjectTypes())

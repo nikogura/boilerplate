@@ -1,0 +1,20 @@
+{
+  "users": [
+    {
+      "name": "alice",
+      "public_keys": [
+        "<pub key 1>",
+        "<pub key 2>"
+      ],
+      "role": "admin"
+    },
+    {
+      "name": "bob",
+      "public_keys": [
+        "<pub key 1>",
+        "<pub key 2>"
+      ],
+      "role": "user"
+    }
+  ]
+}

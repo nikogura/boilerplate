@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package {{.ProjectPackageName}};
+
+option go_package = "{{.ProjectPackage}}/pkg/{{.ProjectPackageName}}";
+
+// {{.ProjectName}} service demonstrates simple method calls
+service {{.ProjectName}} {
+    // Foo method demonstrates a simple call
+    rpc Foo(FooRequest) returns (FooResponse);
+    
+    // Bar method demonstrates a simple call
+    rpc Bar(BarRequest) returns (BarResponse);
+    
+    // Baz method demonstrates a simple call
+    rpc Baz(BazRequest) returns (BazResponse);
+}
+
+// Request for Foo method
+message FooRequest {
+    // Username for authentication
+    string username = 1;
+}
+
+// Response from Foo method
+message FooResponse {
+    // Response message
+    string message = 1;
+}
+
+// Request for Bar method
+message BarRequest {
+    // Username for authentication
+    string username = 1;
+}
+
+// Response from Bar method
+message BarResponse {
+    // Response message
+    string message = 1;
+}
+
+// Request for Baz method
+message BazRequest {
+    // Username for authentication
+    string username = 1;
+}
+
+// Response from Baz method
+message BazResponse {
+    // Response message
+    string message = 1;
+}

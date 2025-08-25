@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-type HeadlessServiceParams struct {
+type IndirectSelectionParams struct {
 	ProjectName       string `json:"ProjectName"`
 	ProjectPackage    string `json:"ProjectPackage"`
 	EnvPrefix         string `json:"EnvPrefix"`
@@ -35,30 +35,30 @@ type HeadlessServiceParams struct {
 	OwnerEmail        string `json:"OwnerEmail"`
 }
 
-func (hsp *HeadlessServiceParams) Values() map[ParamPrompt]*string {
+func (isp *IndirectSelectionParams) Values() map[ParamPrompt]*string {
 	return map[ParamPrompt]*string{
-		GoVersion:           &hsp.GolangVersion,
+		GoVersion:           &isp.GolangVersion,
 		DockerRegistry:      nil,
 		DockerProject:       nil,
-		ProjName:            &hsp.ProjectName,
-		ProjPkgName:         &hsp.ProjectPackage,
-		ProjEnvPrefix:       &hsp.EnvPrefix,
-		ProjShortDesc:       &hsp.ProjectShortDesc,
-		ProjLongDesc:        &hsp.ProjectLongDesc,
-		ProjMaintainerName:  &hsp.MaintainerName,
-		ProjMaintainerEmail: &hsp.MaintainerEmail,
-		DbtRepo:             &hsp.DbtRepo,
-		ProjectVersion:      &hsp.ProjectVersion,
-		ServerDefPort:       &hsp.DefaultServerPort,
-		ServerShortDesc:     &hsp.ServerShortDesc,
-		ServerLongDesc:      &hsp.ServerLongDesc,
-		OwnerName:           &hsp.OwnerName,
-		OwnerEmail:          &hsp.OwnerEmail,
+		ProjName:            &isp.ProjectName,
+		ProjPkgName:         &isp.ProjectPackage,
+		ProjEnvPrefix:       &isp.EnvPrefix,
+		ProjShortDesc:       &isp.ProjectShortDesc,
+		ProjLongDesc:        &isp.ProjectLongDesc,
+		ProjMaintainerName:  &isp.MaintainerName,
+		ProjMaintainerEmail: &isp.MaintainerEmail,
+		DbtRepo:             &isp.DbtRepo,
+		ProjectVersion:      &isp.ProjectVersion,
+		ServerDefPort:       &isp.DefaultServerPort,
+		ServerShortDesc:     &isp.ServerShortDesc,
+		ServerLongDesc:      &isp.ServerLongDesc,
+		OwnerName:           &isp.OwnerName,
+		OwnerEmail:          &isp.OwnerEmail,
 	}
 }
 
-func (hsp *HeadlessServiceParams) AsMap() (output map[string]any, err error) {
-	data, err := json.Marshal(&hsp)
+func (isp *IndirectSelectionParams) AsMap() (output map[string]any, err error) {
+	data, err := json.Marshal(&isp)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to marshal params object")
 		return output, err
@@ -72,27 +72,27 @@ func (hsp *HeadlessServiceParams) AsMap() (output map[string]any, err error) {
 	}
 
 	// Add a Go package-safe version of ProjectName
-	output["ProjectPackageName"] = strings.ReplaceAll(hsp.ProjectName, "-", "")
+	output["ProjectPackageName"] = strings.ReplaceAll(isp.ProjectName, "-", "")
 
 	return output, err
 }
 
-func GetHeadlessServiceParamsPromptMessaging() map[ParamPrompt]Prompt {
+func GetIndirectSelectionParamsPromptMessaging() map[ParamPrompt]Prompt {
 	prompts := commonPromptMessaging()
 
-	// Add headless service specific prompts
+	// Add indirect selection specific prompts
 	prompts[ProjEnvPrefix] = Prompt{
-		PromptMsg:    "Enter environment variable prefix for your service.",
+		PromptMsg:    "Enter environment variable prefix for your indirect selection service.",
 		InputFailMsg: "failed to read environment prefix",
 		Validations:  envPrefix,
 		DefaultValue: "SERVICE",
 	}
 
 	prompts[ServerDefPort] = Prompt{
-		PromptMsg:    "Enter default metrics port.",
-		InputFailMsg: "failed to read default metrics port",
+		PromptMsg:    "Enter default gRPC port.",
+		InputFailMsg: "failed to read default gRPC port",
 		Validations:  portValidation,
-		DefaultValue: "8080",
+		DefaultValue: "50001",
 	}
 
 	prompts[OwnerName] = Prompt{
@@ -111,8 +111,8 @@ func GetHeadlessServiceParamsPromptMessaging() map[ParamPrompt]Prompt {
 	return prompts
 }
 
-func HeadlessServiceParamsFromPrompts(params *HeadlessServiceParams, r io.Reader) (err error) {
-	prompts := GetHeadlessServiceParamsPromptMessaging()
+func IndirectSelectionParamsFromPrompts(params *IndirectSelectionParams, r io.Reader) (err error) {
+	prompts := GetIndirectSelectionParamsPromptMessaging()
 	err = paramsFromPrompts(r, prompts, params)
 	if err != nil {
 		return err
