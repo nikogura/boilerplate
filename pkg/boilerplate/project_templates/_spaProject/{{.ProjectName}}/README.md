@@ -20,6 +20,13 @@ make build
 ./{{.ProjectName}} server
 ```
 
+### Build with Semantic Version
+To inject a semantic version into the UI footer:
+```bash
+SEMVER=v1.2.3 make build
+./{{.ProjectName}} server
+```
+
 The service will start:
 - **Main application**: http://localhost:9999 
 - **Metrics/health**: http://localhost:8080

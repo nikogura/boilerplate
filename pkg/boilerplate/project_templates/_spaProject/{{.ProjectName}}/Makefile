@@ -8,11 +8,9 @@ all: build
 # Generate build info for UI
 build-info:
 	@echo "Generating build info..."
-	@BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ") && \
-	BUILD_VERSION="${SEMVER:-local}" && \
-	BUILD_COMMIT="$(shell git rev-parse --short HEAD 2>/dev/null || echo 'local')" && \
+	@BUILD_VERSION="${SEMVER:-local}" && \
 	mkdir -p pkg/ui/static && \
-	echo "{\"version\":\"$$BUILD_VERSION\",\"buildTime\":\"$$BUILD_TIME\",\"commit\":\"$$BUILD_COMMIT\"}" > pkg/ui/static/build-info.json
+	echo "{\"version\":\"$$BUILD_VERSION\"}" > pkg/ui/static/build-info.json
 
 # Build {{.ProjectName}} binary
 build: build-info
