@@ -472,6 +472,7 @@
 
     <footer class="footer">
         <p>&copy; 2024 {{.ProjectName}} Service | Built with Go & ❤️</p>
+        <p id="buildInfo" style="font-size: 0.9rem; opacity: 0.7; margin-top: 0.5rem;">Build: local</p>
     </footer>
 
     <script>
@@ -523,8 +524,32 @@
             });
         });
 
+        // Load build info
+        async function loadBuildInfo() {
+            try {
+                const response = await fetch('/build-info.json');
+                if (response.ok) {
+                    const buildInfo = await response.json();
+                    let buildText = 'Build: local';
+                    if (buildInfo) {
+                        buildText = `Build: ${buildInfo.version} | ${buildInfo.buildTime}`;
+                        if (buildInfo.commit && buildInfo.commit !== 'unknown') {
+                            buildText += ` | ${buildInfo.commit.substring(0, 7)}`;
+                        }
+                    }
+                    document.getElementById('buildInfo').textContent = buildText;
+                }
+            } catch (error) {
+                // Keep default 'Build: local' text if build-info.json doesn't exist
+                console.log('Build info not available');
+            }
+        }
+
         // Load user info when page loads
-        document.addEventListener('DOMContentLoaded', loadUserInfo);
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserInfo();
+            loadBuildInfo();
+        });
 
         // Add some interactivity to feature cards
         document.querySelectorAll('.feature-card').forEach(card => {
