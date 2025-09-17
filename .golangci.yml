@@ -61,6 +61,7 @@ linters:
       path: github.com/nikogura/namedreturns
       type: module
       description: enforces the use of named returns in Go functions
+      original-url: github.com/nikogura/namedreturns
 
   enable:
     - asasalint # checks for pass []any as any in variadic func(...any)
